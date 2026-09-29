@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { BookOpen, Sparkles, AlertCircle, ArrowRight, Lock, Mail, ShieldCheck } from 'lucide-react';
+import { AdSenseBlock } from './AdSenseBlock';
 
 export const AuthScreen: React.FC = () => {
   const { signInWithGoogle, signInWithEmail, signUpWithEmail, authError, clearAuthError } = useAuth();
@@ -83,7 +84,7 @@ export const AuthScreen: React.FC = () => {
       </header>
 
       {/* Main Auth Container */}
-      <main className="flex-1 flex items-center justify-center p-6 sm:p-10">
+      <main className="flex-1 flex flex-col items-center justify-center p-6 sm:p-10">
         <div className="w-full max-w-md bg-white rounded-2xl border border-stone-200 shadow-xl overflow-hidden">
           {/* Card Banner */}
           <div className="p-8 text-center border-b border-stone-100 bg-gradient-to-b from-stone-50 to-white">
@@ -250,6 +251,11 @@ export const AuthScreen: React.FC = () => {
           <div className="px-8 py-3.5 bg-stone-50 border-t border-stone-100 text-center text-[11px] text-stone-500">
             Protected by Firebase Cloud Authentication &amp; Firestore Security Rules
           </div>
+        </div>
+
+        {/* Defined AdSense Block for public visitors / crawler */}
+        <div className="w-full max-w-md mt-4">
+          <AdSenseBlock />
         </div>
       </main>
 

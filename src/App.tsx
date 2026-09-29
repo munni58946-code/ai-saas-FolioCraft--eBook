@@ -10,6 +10,7 @@ import { DeleteConfirmationModal } from './components/DeleteConfirmationModal';
 import { BookEditorModal } from './components/BookEditorModal';
 import { NewBookModal } from './components/NewBookModal';
 import { AuthScreen } from './components/AuthScreen';
+import { AdSenseBlock } from './components/AdSenseBlock';
 import { useAuth } from './context/AuthContext';
 import {
   subscribeUserBooks,
@@ -474,6 +475,9 @@ export default function App() {
             ))}
           </div>
         )}
+
+        {/* Defined Google AdSense Advertisement Block */}
+        <AdSenseBlock className="mt-10" />
       </main>
 
       {/* QUIET CURATORIAL FOOTER */}

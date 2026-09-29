@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Book } from '../types/book';
 import { THEME_PALETTES } from '../data/themes';
+import { AdSenseBlock } from './AdSenseBlock';
 import {
   ArrowLeft,
   ChevronLeft,
@@ -548,6 +549,9 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
             </ul>
           </div>
         </article>
+
+        {/* Defined Google AdSense Advertisement Block */}
+        <AdSenseBlock className="my-8" />
 
         {/* BOTTOM PAGINATION CONTROLS */}
         <div
