@@ -1,0 +1,102 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile document storing basic account metadata.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "User email address."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User display name."
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "User avatar URL."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO timestamp of profile creation."
+        }
+      },
+      "required": ["userId", "email", "createdAt"]
+    },
+    "BookEntity": {
+      "title": "BookEntity",
+      "description": "Full book publication data with 4 chapters, demographic brief, and theme.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique book identifier."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner user UID."
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the monograph."
+        },
+        "subtitle": {
+          "type": "string",
+          "description": "Subtitle of the monograph."
+        },
+        "author": {
+          "type": "string",
+          "description": "Author(s) of the book."
+        },
+        "edition": {
+          "type": "string",
+          "description": "Edition series string."
+        },
+        "publicationYear": {
+          "type": "string",
+          "description": "Year of publication."
+        },
+        "genre": {
+          "type": "string",
+          "description": "Subject or discipline."
+        },
+        "themeId": {
+          "type": "string",
+          "description": "Palette theme identifier."
+        },
+        "demographic": {
+          "type": "object",
+          "description": "Demographic persona brief."
+        },
+        "chapters": {
+          "type": "array",
+          "description": "List of 4 formatted chapters."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO timestamp of creation."
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp of last update."
+        }
+      },
+      "required": ["id", "userId", "title", "author", "themeId", "chapters", "demographic", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Private user profile document accessible only to the owner."
+    },
+    "/users/{userId}/books/{bookId}": {
+      "schema": "BookEntity",
+      "description": "Collection of books authored and managed by the authenticated user."
+    }
+  }
+}

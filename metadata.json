@@ -1,0 +1,6 @@
+{
+  "name": "FolioCraft - eBook Studio & PDF Publisher",
+  "description": "Professional eBook creator, interactive reader, 3D book mockup generator, and direct vector PDF export center.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
