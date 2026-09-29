@@ -15,18 +15,23 @@ import {
   BookOpen,
   Sparkles,
   Layers,
+  CreditCard,
 } from 'lucide-react';
 
 interface ExportCenterModalProps {
   book: Book;
   onClose: () => void;
   onOpenPrintPreview: () => void;
+  onOpenCheckout?: (book: Book) => void;
+  isPurchased?: boolean;
 }
 
 export const ExportCenterModal: React.FC<ExportCenterModalProps> = ({
   book,
   onClose,
   onOpenPrintPreview,
+  onOpenCheckout,
+  isPurchased = false,
 }) => {
   const theme = THEME_PALETTES[book.themeId] || THEME_PALETTES['deep-indigo'];
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
@@ -91,6 +96,9 @@ export const ExportCenterModal: React.FC<ExportCenterModalProps> = ({
               <span className="text-stone-400 text-xs">·</span>
               <span className="text-xs text-stone-500 font-serif italic truncate max-w-xs">
                 {book.title}
+              </span>
+              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-amber-50 text-amber-900 border border-amber-200">
+                {book.price === 0 ? 'Open Access (Free)' : `${book.currency || '₹'}${book.price ?? 499}`}
               </span>
             </div>
             <p className="text-xs text-stone-500 mt-0.5">
@@ -163,6 +171,19 @@ export const ExportCenterModal: React.FC<ExportCenterModalProps> = ({
 
               {/* Action Buttons */}
               <div className="flex flex-col gap-2 shrink-0 sm:w-48">
+                {book.price !== 0 && !isPurchased && onOpenCheckout && (
+                  <button
+                    onClick={() => {
+                      onClose();
+                      onOpenCheckout(book);
+                    }}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors"
+                  >
+                    <CreditCard className="w-4 h-4 text-blue-200" />
+                    <span>Pay with Razorpay ({book.currency || '₹'}{book.price ?? 499})</span>
+                  </button>
+                )}
+
                 <button
                   onClick={handlePDFExport}
                   disabled={isGeneratingPDF}

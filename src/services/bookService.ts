@@ -10,6 +10,26 @@ import { db, handleFirestoreError, OperationType } from '../firebase';
 import { Book } from '../types/book';
 import { SAMPLE_BOOKS } from '../data/sampleBooks';
 
+const LOCAL_BOOKS_STORAGE = 'foliocraft_local_books_';
+
+function getLocalBooks(userId: string): Book[] {
+  try {
+    const raw = localStorage.getItem(LOCAL_BOOKS_STORAGE + userId);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {
+    console.error(e);
+  }
+  return SAMPLE_BOOKS;
+}
+
+function saveLocalBooks(userId: string, books: Book[]) {
+  try {
+    localStorage.setItem(LOCAL_BOOKS_STORAGE + userId, JSON.stringify(books));
+  } catch (e) {
+    console.error(e);
+  }
+}
+
 export function subscribeUserBooks(
   userId: string,
   onUpdate: (books: Book[]) => void,
@@ -32,10 +52,12 @@ export function subscribeUserBooks(
           for (const book of seededBooks) {
             await setDoc(doc(db, 'users', userId, 'books', book.id), book);
           }
+          saveLocalBooks(userId, seededBooks);
           onUpdate(seededBooks);
         } catch (err) {
           console.warn('Could not auto-seed sample books:', err);
-          onUpdate(SAMPLE_BOOKS);
+          const fallback = getLocalBooks(userId);
+          onUpdate(fallback);
         }
       } else {
         const loadedBooks: Book[] = snapshot.docs.map((docSnap) => {
@@ -63,13 +85,20 @@ export function subscribeUserBooks(
           return tB - tA;
         });
 
+        saveLocalBooks(userId, loadedBooks);
         onUpdate(loadedBooks);
       }
     },
     (error) => {
-      console.error('Firestore onSnapshot error:', error);
+      console.warn('Firestore onSnapshot error, using local books:', error);
+      const fallback = getLocalBooks(userId);
+      onUpdate(fallback);
       if (onError) onError(error);
-      handleFirestoreError(error, OperationType.GET, booksPath);
+      try {
+        handleFirestoreError(error, OperationType.GET, booksPath);
+      } catch (err) {
+        // Diagnostic handled and logged
+      }
     }
   );
 
@@ -78,25 +107,47 @@ export function subscribeUserBooks(
 
 export async function saveUserBook(userId: string, book: Book): Promise<void> {
   const path = `users/${userId}/books/${book.id}`;
+  // Always update local cache
+  const local = getLocalBooks(userId);
+  const idx = local.findIndex((b) => b.id === book.id);
+  const updatedBook = {
+    ...book,
+    userId,
+    updatedAt: new Date().toISOString(),
+  };
+  if (idx >= 0) {
+    local[idx] = updatedBook;
+  } else {
+    local.unshift(updatedBook);
+  }
+  saveLocalBooks(userId, local);
+
   try {
     const bookDocRef = doc(db, 'users', userId, 'books', book.id);
-    const payload = {
-      ...book,
-      userId,
-      updatedAt: new Date().toISOString(),
-    };
-    await setDoc(bookDocRef, payload, { merge: true });
+    await setDoc(bookDocRef, updatedBook, { merge: true });
   } catch (error) {
-    handleFirestoreError(error, OperationType.WRITE, path);
+    try {
+      handleFirestoreError(error, OperationType.WRITE, path);
+    } catch (err) {
+      // Diagnostic handled and logged
+    }
   }
 }
 
 export async function deleteUserBook(userId: string, bookId: string): Promise<void> {
   const path = `users/${userId}/books/${bookId}`;
+  // Always update local cache
+  const local = getLocalBooks(userId).filter((b) => b.id !== bookId);
+  saveLocalBooks(userId, local);
+
   try {
     const bookDocRef = doc(db, 'users', userId, 'books', bookId);
     await deleteDoc(bookDocRef);
   } catch (error) {
-    handleFirestoreError(error, OperationType.DELETE, path);
+    try {
+      handleFirestoreError(error, OperationType.DELETE, path);
+    } catch (err) {
+      // Diagnostic handled and logged
+    }
   }
 }

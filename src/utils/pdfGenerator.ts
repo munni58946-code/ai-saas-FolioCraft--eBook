@@ -120,6 +120,13 @@ export async function generateBookPDF(book: Book): Promise<void> {
   doc.setTextColor(180, 185, 195);
   doc.text(`${book.edition} · All Rights Reserved`, pageWidth / 2, authorBoxY + 16, { align: 'center' });
 
+  // Retail Price on PDF cover
+  const priceText = book.price === 0 ? 'OPEN ACCESS MONOGRAPH (FREE)' : `RETAIL PRICE: ${book.currency || '₹'}${book.price ?? 499}`;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(rgb.accent[0], rgb.accent[1], rgb.accent[2]);
+  doc.text(priceText, pageWidth / 2, authorBoxY + 22, { align: 'center' });
+
   // -------------------------------------------------------------
   // PAGE 2: TABLE OF CONTENTS & DEMOGRAPHIC PERSONA
   // -------------------------------------------------------------

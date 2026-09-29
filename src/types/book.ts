@@ -56,6 +56,8 @@ export interface Book {
   coverImagePrompt?: string;
   demographic: DemographicPersona;
   chapters: [Chapter, Chapter, Chapter, Chapter]; // exactly 4 formatted chapters
+  price?: number; // Retail / list price for the monograph
+  currency?: string; // Currency symbol or code, e.g. '₹', '$', '€', '£'
   createdAt: string;
   updatedAt: string;
 }

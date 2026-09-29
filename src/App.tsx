@@ -9,14 +9,19 @@ import { PrintPreviewView } from './components/PrintPreviewView';
 import { DeleteConfirmationModal } from './components/DeleteConfirmationModal';
 import { BookEditorModal } from './components/BookEditorModal';
 import { NewBookModal } from './components/NewBookModal';
-import { AuthScreen } from './components/AuthScreen';
+import { RazorpayCheckoutModal } from './components/RazorpayCheckoutModal';
+import { RazorpaySettingsModal } from './components/RazorpaySettingsModal';
 import { AdSenseBlock } from './components/AdSenseBlock';
-import { useAuth } from './context/AuthContext';
+import { useAuth, DEFAULT_PUBLISHER_USER } from './context/AuthContext';
 import {
   subscribeUserBooks,
   saveUserBook,
   deleteUserBook,
 } from './services/bookService';
+import {
+  getPurchasedBookIds,
+  isBookPurchased,
+} from './services/paymentService';
 import {
   BookOpen,
   Plus,
@@ -30,10 +35,12 @@ import {
   LogOut,
   User as UserIcon,
   Loader2,
+  CreditCard,
 } from 'lucide-react';
 
 export default function App() {
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { user, signOut } = useAuth();
+  const currentUser = user || DEFAULT_PUBLISHER_USER;
 
   // Books list state managed via Firestore for the authenticated user
   const [books, setBooks] = useState<Book[]>([]);
@@ -41,27 +48,21 @@ export default function App() {
 
   // Subscribe to user's private Firestore books collection once signed in
   useEffect(() => {
-    if (!user) {
-      setBooks([]);
-      setBooksLoading(false);
-      return;
-    }
-
     setBooksLoading(true);
     const unsubscribe = subscribeUserBooks(
-      user.uid,
+      currentUser.uid,
       (updatedBooks) => {
         setBooks(updatedBooks);
         setBooksLoading(false);
       },
       (error) => {
-        console.error('Failed to subscribe to user books:', error);
+        console.warn('Using local curated monographs:', error);
         setBooksLoading(false);
       }
     );
 
     return () => unsubscribe();
-  }, [user]);
+  }, [currentUser.uid]);
 
   // Views & Modals state
   const [activeView, setActiveView] = useState<'library' | 'reader' | 'preview'>('library');
@@ -74,6 +75,9 @@ export default function App() {
   const [deleteCandidate, setDeleteCandidate] = useState<Book | null>(null);
   const [editBook, setEditBook] = useState<Book | null>(null);
   const [showNewModal, setShowNewModal] = useState<boolean>(false);
+  const [checkoutBook, setCheckoutBook] = useState<Book | null>(null);
+  const [showPaymentSettingsModal, setShowPaymentSettingsModal] = useState<boolean>(false);
+  const [purchasedIds, setPurchasedIds] = useState<string[]>(() => getPurchasedBookIds());
 
   // Search & Category Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -98,9 +102,9 @@ export default function App() {
   };
 
   const handleConfirmDelete = async () => {
-    if (!deleteCandidate || !user) return;
+    if (!deleteCandidate) return;
     try {
-      await deleteUserBook(user.uid, deleteCandidate.id);
+      await deleteUserBook(currentUser.uid, deleteCandidate.id);
     } catch (err) {
       console.error('Failed to delete book in firestore:', err);
     }
@@ -112,9 +116,8 @@ export default function App() {
   };
 
   const handleSaveBook = async (updatedBook: Book) => {
-    if (!user) return;
     try {
-      await saveUserBook(user.uid, updatedBook);
+      await saveUserBook(currentUser.uid, updatedBook);
       if (selectedBookForReader?.id === updatedBook.id) {
         setSelectedBookForReader(updatedBook);
       }
@@ -125,9 +128,8 @@ export default function App() {
   };
 
   const handleBookCreated = async (newBook: Book) => {
-    if (!user) return;
     try {
-      await saveUserBook(user.uid, newBook);
+      await saveUserBook(currentUser.uid, newBook);
     } catch (err) {
       console.error('Failed to create book in firestore:', err);
     }
@@ -140,31 +142,10 @@ export default function App() {
   };
 
   const handleResetToSamples = async () => {
-    if (!user) return;
     for (const sample of SAMPLE_BOOKS) {
-      await saveUserBook(user.uid, sample);
+      await saveUserBook(currentUser.uid, sample);
     }
   };
-
-  // -------------------------------------------------------------
-  // AUTH GUARD:
-  // Do not allow user to access any functionality until signed in!
-  // -------------------------------------------------------------
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-[#faf8f5] flex flex-col items-center justify-center text-stone-700">
-        <Loader2 className="w-8 h-8 text-amber-700 animate-spin mb-3" />
-        <span className="text-xs font-serif italic text-stone-500 tracking-wider">
-          Initializing FolioCraft Security Context...
-        </span>
-      </div>
-    );
-  }
-
-  if (!user) {
-    // Strict authentication gate: Render ONLY the AuthScreen until authenticated
-    return <AuthScreen />;
-  }
 
   // Filtered books
   const filteredBooks = books.filter((b) => {
@@ -205,6 +186,8 @@ export default function App() {
           onOpen3DMockup={() => setMockupBook(selectedBookForReader)}
           onOpenExport={() => setExportBook(selectedBookForReader)}
           onOpenPrintPreview={() => handleOpenPrintPreview(selectedBookForReader)}
+          onOpenCheckout={() => setCheckoutBook(selectedBookForReader)}
+          isPurchased={isBookPurchased(selectedBookForReader.id, selectedBookForReader.price)}
         />
 
         {/* 3D Mockup Modal over Reader if requested */}
@@ -227,6 +210,23 @@ export default function App() {
             onOpenPrintPreview={() => {
               handleOpenPrintPreview(exportBook);
               setExportBook(null);
+            }}
+            onOpenCheckout={(b) => setCheckoutBook(b)}
+            isPurchased={isBookPurchased(exportBook.id, exportBook.price)}
+          />
+        )}
+
+        {/* Razorpay Checkout Modal over Reader if requested */}
+        {checkoutBook && (
+          <RazorpayCheckoutModal
+            book={checkoutBook}
+            onClose={() => setCheckoutBook(null)}
+            onPaymentSuccess={() => {
+              setPurchasedIds([...getPurchasedBookIds()]);
+            }}
+            onOpenExport={() => {
+              setExportBook(checkoutBook);
+              setCheckoutBook(null);
             }}
           />
         )}
@@ -294,8 +294,17 @@ export default function App() {
           </button>
         </nav>
 
-        {/* Zone 3: Primary Actions (New Monograph + User Profile / Sign Out) */}
-        <div className="flex items-center gap-3">
+        {/* Zone 3: Primary Actions (New Monograph + Razorpay Setup + User Profile) */}
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={() => setShowPaymentSettingsModal(true)}
+            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg shadow-2xs transition-colors whitespace-nowrap"
+            title="Configure Razorpay Gateway & Direct Bank Deposits"
+          >
+            <CreditCard className="w-3.5 h-3.5 text-blue-600" />
+            <span className="hidden sm:inline">Razorpay Setup</span>
+          </button>
+
           <button
             onClick={() => setShowNewModal(true)}
             className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-stone-900 hover:bg-stone-800 rounded-lg shadow-xs transition-colors whitespace-nowrap"
@@ -306,27 +315,32 @@ export default function App() {
 
           {/* User Profile & Sign Out Control */}
           <div className="flex items-center gap-2 pl-2 border-l border-stone-300">
-            {user.photoURL ? (
+            {currentUser.photoURL ? (
               <img
-                src={user.photoURL}
-                alt={user.displayName || 'User'}
+                src={currentUser.photoURL}
+                alt={currentUser.displayName || 'User'}
                 className="w-7 h-7 rounded-full object-cover border border-stone-300"
                 referrerPolicy="no-referrer"
               />
             ) : (
-              <div className="w-7 h-7 rounded-full bg-stone-200 text-stone-700 flex items-center justify-center text-xs font-bold font-serif">
-                {(user.displayName || user.email || 'U').charAt(0).toUpperCase()}
+              <div className="w-7 h-7 rounded-full bg-stone-900 text-white flex items-center justify-center text-xs font-bold font-serif shadow-xs">
+                {(currentUser.displayName || currentUser.email || 'M').charAt(0).toUpperCase()}
               </div>
             )}
 
-            <span className="hidden lg:inline text-xs text-stone-700 font-medium truncate max-w-[140px]">
-              {user.displayName || user.email?.split('@')[0]}
-            </span>
+            <div className="hidden lg:flex flex-col text-left">
+              <span className="text-xs text-stone-900 font-semibold leading-tight truncate max-w-[140px]">
+                {currentUser.displayName || 'Munni (Publisher)'}
+              </span>
+              <span className="text-[10px] text-stone-500 font-mono leading-none truncate max-w-[140px]">
+                {currentUser.email}
+              </span>
+            </div>
 
             <button
               onClick={() => signOut()}
               className="p-1.5 text-stone-500 hover:text-stone-900 hover:bg-stone-200/60 rounded-md transition-colors"
-              title="Sign Out"
+              title="Reset Session / Switch Account"
             >
               <LogOut className="w-3.5 h-3.5" />
             </button>
@@ -348,7 +362,7 @@ export default function App() {
               Curated monographs, formatted chapters &amp; client-side vector printing.
             </h1>
             <p className="font-serif italic text-stone-600 text-sm sm:text-base mt-3 leading-relaxed">
-              Welcome back, <strong className="text-stone-900 font-medium not-italic">{user.displayName || user.email}</strong>. Manage your private cloud monographs, reader settings, 3D mockups, and vector A4 PDF exports.
+              Welcome back, <strong className="text-stone-900 font-medium not-italic">{currentUser.displayName || currentUser.email}</strong>. Manage your private cloud monographs, reader settings, 3D mockups, and vector A4 PDF exports.
             </p>
           </div>
 
@@ -471,6 +485,8 @@ export default function App() {
                 onOpenExport={handleOpenExport}
                 onDeleteRequest={handleDeleteRequest}
                 onEditRequest={handleEditRequest}
+                onBuyRequest={(b) => setCheckoutBook(b)}
+                isPurchased={isBookPurchased(book.id, book.price)}
               />
             ))}
           </div>
@@ -485,7 +501,7 @@ export default function App() {
         <div className="flex items-center gap-2">
           <span className="font-serif font-bold text-stone-700">FolioCraft</span>
           <span>·</span>
-          <span>Logged in as {user.email}</span>
+          <span>Logged in as {currentUser.email}</span>
         </div>
         <div className="flex items-center gap-4 text-[11px]">
           <button
@@ -527,10 +543,39 @@ export default function App() {
             handleOpenPrintPreview(exportBook);
             setExportBook(null);
           }}
+          onOpenCheckout={(b) => setCheckoutBook(b)}
+          isPurchased={isBookPurchased(exportBook.id, exportBook.price)}
         />
       )}
 
-      {/* 3. Delete Confirmation Modal */}
+      {/* 3. Razorpay Checkout Modal */}
+      {checkoutBook && (
+        <RazorpayCheckoutModal
+          book={checkoutBook}
+          onClose={() => setCheckoutBook(null)}
+          onPaymentSuccess={() => {
+            setPurchasedIds([...getPurchasedBookIds()]);
+          }}
+          onOpenReader={() => {
+            setSelectedBookForReader(checkoutBook);
+            setActiveView('reader');
+            setCheckoutBook(null);
+          }}
+          onOpenExport={() => {
+            setExportBook(checkoutBook);
+            setCheckoutBook(null);
+          }}
+        />
+      )}
+
+      {/* 4. Razorpay Settings & Bank Gateway Modal */}
+      {showPaymentSettingsModal && (
+        <RazorpaySettingsModal
+          onClose={() => setShowPaymentSettingsModal(false)}
+        />
+      )}
+
+      {/* 5. Delete Confirmation Modal */}
       {deleteCandidate && (
         <DeleteConfirmationModal
           book={deleteCandidate}
@@ -539,7 +584,7 @@ export default function App() {
         />
       )}
 
-      {/* 4. Book Studio Editor Modal */}
+      {/* 6. Book Studio Editor Modal */}
       {editBook && (
         <BookEditorModal
           book={editBook}
@@ -548,7 +593,7 @@ export default function App() {
         />
       )}
 
-      {/* 5. New Book Creation Modal */}
+      {/* 7. New Book Creation Modal */}
       {showNewModal && (
         <NewBookModal
           onBookCreated={handleBookCreated}

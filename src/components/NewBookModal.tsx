@@ -16,6 +16,9 @@ export const NewBookModal: React.FC<NewBookModalProps> = ({
   const [topic, setTopic] = useState('');
   const [genre, setGenre] = useState('Strategy & Systems');
   const [themeId, setThemeId] = useState<ThemePaletteId>('deep-indigo');
+  const [price, setPrice] = useState<number>(499);
+  const [currency, setCurrency] = useState<string>('₹');
+  const [isFree, setIsFree] = useState<boolean>(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationStep, setGenerationStep] = useState<string>('');
   const [importError, setImportError] = useState<string | null>(null);
@@ -28,18 +31,20 @@ export const NewBookModal: React.FC<NewBookModalProps> = ({
     setIsGenerating(true);
     setGenerationStep(useAI ? 'Synthesizing chapter architecture with Gemini...' : 'Assembling curated monograph...');
 
+    const finalPrice = isFree ? 0 : Number(price) || 0;
+
     try {
       let book: Book;
       if (useAI) {
-        book = await generateBookWithAI(topic, genre, themeId);
+        book = await generateBookWithAI(topic, genre, themeId, finalPrice, currency);
       } else {
-        book = generateCuratedBookTemplate(topic, genre, themeId);
+        book = generateCuratedBookTemplate(topic, genre, themeId, finalPrice, currency);
       }
       onBookCreated(book);
     } catch (err: any) {
       console.error(err);
       // Fallback to deterministic template
-      const fallbackBook = generateCuratedBookTemplate(topic, genre, themeId);
+      const fallbackBook = generateCuratedBookTemplate(topic, genre, themeId, finalPrice, currency);
       onBookCreated(fallbackBook);
     } finally {
       setIsGenerating(false);
@@ -162,6 +167,64 @@ export const NewBookModal: React.FC<NewBookModalProps> = ({
                 ))}
               </select>
             </div>
+          </div>
+
+          {/* Monograph Pricing Architecture */}
+          <div className="p-3.5 bg-stone-50/80 border border-stone-200 rounded-xl space-y-2.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-stone-900 flex items-center gap-1.5">
+                <span>Monograph Retail Price &amp; Currency</span>
+              </label>
+              <label className="flex items-center gap-1.5 cursor-pointer text-xs text-stone-600 hover:text-stone-900 select-none">
+                <input
+                  type="checkbox"
+                  checked={isFree}
+                  onChange={(e) => setIsFree(e.target.checked)}
+                  className="rounded border-stone-300 text-stone-900 focus:ring-stone-900 h-3.5 w-3.5"
+                />
+                <span className="font-medium">Free / Open Access Monograph</span>
+              </label>
+            </div>
+
+            {!isFree ? (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <span className="block text-[11px] text-stone-500 mb-1">Currency</span>
+                  <select
+                    value={currency}
+                    onChange={(e) => setCurrency(e.target.value)}
+                    className="w-full text-xs px-3 py-2 border border-stone-300 rounded-lg focus:ring-1 focus:ring-stone-900 bg-white"
+                  >
+                    <option value="₹">₹ INR (Indian Rupee)</option>
+                    <option value="$">$ USD (US Dollar)</option>
+                    <option value="€">€ EUR (Euro)</option>
+                    <option value="£">£ GBP (British Pound)</option>
+                  </select>
+                </div>
+                <div>
+                  <span className="block text-[11px] text-stone-500 mb-1">Price Amount</span>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-stone-500">
+                      {currency}
+                    </span>
+                    <input
+                      type="number"
+                      min="0"
+                      step={currency === '₹' ? '1' : '0.01'}
+                      value={price}
+                      onChange={(e) => setPrice(Number(e.target.value))}
+                      placeholder={currency === '₹' ? '499' : '19.99'}
+                      className="w-full text-xs pl-7 pr-3 py-2 border border-stone-300 rounded-lg focus:ring-1 focus:ring-stone-900 bg-white"
+                    />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="py-1 text-xs text-emerald-700 font-medium flex items-center gap-1.5">
+                <Check className="w-3.5 h-3.5" />
+                <span>Marked as Open Access Monograph (Free to Read and Download)</span>
+              </div>
+            )}
           </div>
 
           {/* Generation progress */}

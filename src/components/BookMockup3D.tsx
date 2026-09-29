@@ -340,8 +340,14 @@ export const BookMockup3D: React.FC<BookMockup3DProps> = ({
               >
                 FolioCraft Monograph
               </span>
-              <div className="text-[8px] text-stone-300 tracking-wider uppercase mt-0.5">
-                {book.genre} · {book.publicationYear}
+              <div className="text-[8px] text-stone-300 tracking-wider uppercase mt-0.5 flex items-center justify-center gap-1">
+                <span>{book.genre}</span>
+                <span>·</span>
+                <span>{book.publicationYear}</span>
+                <span>·</span>
+                <span className="font-semibold text-amber-300">
+                  {book.price === 0 ? 'FREE' : `${book.currency || '₹'}${book.price ?? 499}`}
+                </span>
               </div>
             </div>
 
@@ -403,8 +409,13 @@ export const BookMockup3D: React.FC<BookMockup3DProps> = ({
             </div>
 
             <div className="pt-3 border-t border-stone-700/80 flex items-center justify-between">
-              <div className="text-[9px] font-mono text-stone-400">
-                ISBN 978-0-241-92{book.publicationYear}
+              <div>
+                <div className="text-[9px] font-mono text-stone-400">
+                  ISBN 978-0-241-92{book.publicationYear}
+                </div>
+                <div className="text-[9px] font-mono font-bold text-amber-300">
+                  PRICE: {book.price === 0 ? 'FREE' : `${book.currency || '₹'}${book.price ?? 499}`}
+                </div>
               </div>
               <div className="w-12 h-6 bg-white/90 rounded px-1 flex items-center justify-center">
                 <div className="flex gap-0.5 items-end h-4">

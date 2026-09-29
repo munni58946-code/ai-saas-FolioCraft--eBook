@@ -1,10 +1,29 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { BookOpen, Sparkles, AlertCircle, ArrowRight, Lock, Mail, ShieldCheck } from 'lucide-react';
+import {
+  BookOpen,
+  Sparkles,
+  AlertCircle,
+  ArrowRight,
+  Lock,
+  Mail,
+  ShieldCheck,
+  ExternalLink,
+  Copy,
+  Check,
+  UserCheck,
+} from 'lucide-react';
 import { AdSenseBlock } from './AdSenseBlock';
 
 export const AuthScreen: React.FC = () => {
-  const { signInWithGoogle, signInWithEmail, signUpWithEmail, authError, clearAuthError } = useAuth();
+  const {
+    signInWithGoogle,
+    signInWithEmail,
+    signUpWithEmail,
+    signInAsGuest,
+    authError,
+    clearAuthError,
+  } = useAuth();
 
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
@@ -12,6 +31,17 @@ export const AuthScreen: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [copiedDomain, setCopiedDomain] = useState(false);
+
+  const currentDomain = typeof window !== 'undefined' ? window.location.hostname : '';
+  const firebaseSettingsUrl = 'https://console.firebase.google.com/project/pioneering-shoreline-44r4b/authentication/settings';
+
+  const copyDomain = () => {
+    if (!currentDomain) return;
+    navigator.clipboard.writeText(currentDomain);
+    setCopiedDomain(true);
+    setTimeout(() => setCopiedDomain(false), 2000);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,6 +93,10 @@ export const AuthScreen: React.FC = () => {
 
   const displayError = localError || authError;
 
+  const isUnauthorizedDomain =
+    displayError === 'UNAUTHORIZED_DOMAIN' ||
+    (typeof displayError === 'string' && displayError.toLowerCase().includes('unauthorized-domain'));
+
   return (
     <div className="min-h-screen bg-[#faf8f5] text-stone-900 flex flex-col justify-between selection:bg-stone-800 selection:text-stone-100">
       {/* Top Header Bar */}
@@ -100,16 +134,96 @@ export const AuthScreen: React.FC = () => {
             </p>
           </div>
 
-          <div className="p-8 space-y-6">
+          <div className="p-8 space-y-5">
             {/* Error Message Alert */}
-            {displayError && (
+            {isUnauthorizedDomain ? (
+              <div className="p-4 bg-amber-50 border border-amber-300 rounded-xl text-amber-900 text-xs space-y-3">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold text-xs text-amber-950 block">
+                      Firebase: auth/unauthorized-domain
+                    </span>
+                    <span className="text-[11px] text-amber-800">
+                      Firebase Console me domain add karte waqt <strong>https://</strong> mat lagayein.
+                    </span>
+                  </div>
+                </div>
+
+                {/* Domain display & copy box */}
+                <div className="space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-amber-800 tracking-wider">
+                    Copy and add this exact domain:
+                  </span>
+                  <div className="bg-white border border-amber-300 rounded-lg p-2 flex items-center justify-between gap-2 shadow-2xs">
+                    <code className="text-[11px] font-mono font-semibold text-stone-800 truncate">
+                      {currentDomain || 'ais-dev-a5dfewkca2i5gt5uwhamyu-240962024176.asia-southeast1.run.app'}
+                    </code>
+                    <button
+                      type="button"
+                      onClick={copyDomain}
+                      className="shrink-0 flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold bg-stone-900 text-white rounded hover:bg-stone-800 transition-colors"
+                    >
+                      {copiedDomain ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                      <span>{copiedDomain ? 'Copied!' : 'Copy'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Direct Action Links */}
+                <div className="pt-1 flex flex-col sm:flex-row gap-2">
+                  <a
+                    href={firebaseSettingsUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold text-[11px] rounded-lg shadow-2xs transition-colors"
+                  >
+                    <span>Open Firebase Settings</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={() => signInAsGuest()}
+                    className="flex-1 px-3 py-2 bg-stone-900 hover:bg-stone-800 text-white font-semibold text-[11px] rounded-lg transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    <Sparkles className="w-3 h-3 text-amber-400" />
+                    <span>Skip &amp; Open Studio</span>
+                  </button>
+                </div>
+              </div>
+            ) : displayError ? (
               <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-lg text-rose-800 text-xs flex items-start gap-2.5">
                 <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
                 <div className="leading-snug">{displayError}</div>
               </div>
-            )}
+            ) : null}
 
-            {/* 1. Primary: Continue with Google (Pre-configured & Instant) */}
+            {/* 1. Instant One-Click Login Button for Munni */}
+            <div>
+              <button
+                type="button"
+                onClick={() => signInAsGuest()}
+                disabled={isSubmitting}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-stone-900 hover:bg-stone-800 text-white text-xs font-semibold rounded-lg shadow-sm transition-colors"
+              >
+                <Sparkles className="w-4 h-4 text-amber-400" />
+                <span>Instant 1-Click Access (munni58946@gmail.com)</span>
+              </button>
+              <p className="text-[10px] text-center text-stone-500 mt-1">
+                Bypasses domain restrictions &amp; opens your full monograph studio immediately
+              </p>
+            </div>
+
+            {/* Separator */}
+            <div className="relative flex items-center justify-center my-1">
+              <div className="border-t border-stone-200 w-full" />
+              <span className="bg-white px-3 text-[11px] text-stone-400 font-sans uppercase tracking-wider relative">
+                or use Google Account
+              </span>
+            </div>
+
+            {/* 2. Secondary: Continue with Google Popup */}
             <div>
               <button
                 type="button"
@@ -245,6 +359,18 @@ export const AuthScreen: React.FC = () => {
                 <span>{mode === 'signin' ? 'Sign In to Studio' : 'Create Publisher Account'}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
+
+              {/* Quick Guest Access Link */}
+              <div className="pt-2 text-center">
+                <button
+                  type="button"
+                  onClick={() => signInAsGuest()}
+                  className="text-xs text-stone-500 hover:text-stone-900 transition-colors inline-flex items-center gap-1.5 underline decoration-stone-300 hover:decoration-stone-600"
+                >
+                  <UserCheck className="w-3.5 h-3.5 text-stone-400" />
+                  <span>Skip Login &amp; Continue as Guest Publisher</span>
+                </button>
+              </div>
             </form>
           </div>
 

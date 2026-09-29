@@ -16,6 +16,7 @@ import {
   Check,
   X,
   Menu,
+  CreditCard,
 } from 'lucide-react';
 
 interface ReaderViewProps {
@@ -24,6 +25,8 @@ interface ReaderViewProps {
   onOpen3DMockup: () => void;
   onOpenExport: () => void;
   onOpenPrintPreview: () => void;
+  onOpenCheckout?: () => void;
+  isPurchased?: boolean;
 }
 
 type PaperTheme = 'alabaster' | 'linen' | 'parchment' | 'midnight';
@@ -36,6 +39,8 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
   onOpen3DMockup,
   onOpenExport,
   onOpenPrintPreview,
+  onOpenCheckout,
+  isPurchased = false,
 }) => {
   const theme = THEME_PALETTES[book.themeId] || THEME_PALETTES['deep-indigo'];
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
@@ -149,10 +154,33 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
           <span className="hidden md:inline text-xs font-serif italic truncate max-w-sm" style={{ color: currentPaper.muted }}>
             {book.title}
           </span>
+
+          <span
+            className="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border"
+            style={{
+              borderColor: currentPaper.border,
+              backgroundColor: `${currentPaper.bg}88`,
+              color: currentPaper.text,
+            }}
+          >
+            {book.price === 0 ? 'Open Access' : `${book.currency || '₹'}${book.price ?? 499}`}
+          </span>
         </div>
 
         {/* Center / Right: Tools */}
         <div className="flex items-center gap-2">
+          {/* Razorpay Buy Monograph Button if not purchased */}
+          {book.price !== 0 && !isPurchased && onOpenCheckout && (
+            <button
+              onClick={onOpenCheckout}
+              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition-colors"
+              title="Unlock full monograph with Razorpay"
+            >
+              <CreditCard className="w-3.5 h-3.5 text-blue-200" />
+              <span>Buy ({book.currency || '₹'}{book.price ?? 499})</span>
+            </button>
+          )}
+
           {/* Persona Brief button */}
           <button
             onClick={() => setShowPersonaBrief(!showPersonaBrief)}

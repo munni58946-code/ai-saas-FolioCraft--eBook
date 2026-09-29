@@ -1,12 +1,18 @@
 import { GoogleGenAI } from '@google/genai';
 import { Book, ThemePaletteId } from '../types/book';
 
-export async function generateBookWithAI(topic: string, genre: string, themeId: ThemePaletteId): Promise<Book> {
+export async function generateBookWithAI(
+  topic: string,
+  genre: string,
+  themeId: ThemePaletteId,
+  price: number = 499,
+  currency: string = '₹'
+): Promise<Book> {
   const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY || (window as any).__GEMINI_API_KEY__;
 
   // If no API key or in browser-only sandbox without injected key, generate rich structured book template
   if (!apiKey) {
-    return generateCuratedBookTemplate(topic, genre, themeId);
+    return generateCuratedBookTemplate(topic, genre, themeId, price, currency);
   }
 
   try {
@@ -160,19 +166,27 @@ Return strictly valid JSON with this exact schema (no markdown fences, no preamb
         quote: c.quote || { text: 'Clarity precedes mastery.', author: 'Classical Axiom' },
         bulletPoints: Array.isArray(c.bulletPoints) ? c.bulletPoints : ['First key takeaway.', 'Second key takeaway.'],
       })) as [any, any, any, any],
+      price,
+      currency,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
   } catch (err) {
     console.warn('AI generation fell back to template:', err);
-    return generateCuratedBookTemplate(topic, genre, themeId);
+    return generateCuratedBookTemplate(topic, genre, themeId, price, currency);
   }
 }
 
 /**
  * Intelligent deterministic generator when AI API key is unavailable or fallback needed
  */
-export function generateCuratedBookTemplate(topic: string, genre: string, themeId: ThemePaletteId): Book {
+export function generateCuratedBookTemplate(
+  topic: string,
+  genre: string,
+  themeId: ThemePaletteId,
+  price: number = 499,
+  currency: string = '₹'
+): Book {
   const cleanTopic = topic.trim() || 'Modern Strategic Architecture';
   const cleanGenre = genre || 'Strategy & Leadership';
 
@@ -286,6 +300,8 @@ export function generateCuratedBookTemplate(topic: string, genre: string, themeI
         ]
       }
     ],
+    price,
+    currency,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
