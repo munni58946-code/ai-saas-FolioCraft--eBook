@@ -5,7 +5,7 @@ export async function generateBookWithAI(
   topic: string,
   genre: string,
   themeId: ThemePaletteId,
-  price: number = 499,
+  price: number = 99,
   currency: string = '₹'
 ): Promise<Book> {
   const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY || (window as any).__GEMINI_API_KEY__;
@@ -184,7 +184,7 @@ export function generateCuratedBookTemplate(
   topic: string,
   genre: string,
   themeId: ThemePaletteId,
-  price: number = 499,
+  price: number = 99,
   currency: string = '₹'
 ): Book {
   const cleanTopic = topic.trim() || 'Modern Strategic Architecture';

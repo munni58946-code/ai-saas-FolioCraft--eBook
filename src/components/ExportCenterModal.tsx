@@ -98,7 +98,7 @@ export const ExportCenterModal: React.FC<ExportCenterModalProps> = ({
                 {book.title}
               </span>
               <span className="text-xs font-semibold px-2 py-0.5 rounded bg-amber-50 text-amber-900 border border-amber-200">
-                {book.price === 0 ? 'Open Access (Free)' : `${book.currency || '₹'}${book.price ?? 499}`}
+                {book.currency || '₹'}{book.price ?? 99}
               </span>
             </div>
             <p className="text-xs text-stone-500 mt-0.5">
@@ -180,7 +180,7 @@ export const ExportCenterModal: React.FC<ExportCenterModalProps> = ({
                     className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors"
                   >
                     <CreditCard className="w-4 h-4 text-blue-200" />
-                    <span>Pay with Razorpay ({book.currency || '₹'}{book.price ?? 499})</span>
+                    <span>Pay with Razorpay ({book.currency || '₹'}{book.price ?? 99})</span>
                   </button>
                 )}
 

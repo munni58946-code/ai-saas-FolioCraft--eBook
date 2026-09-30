@@ -113,7 +113,7 @@ export const SAMPLE_BOOKS: Book[] = [
     ],
     createdAt: '2026-03-15T10:00:00.000Z',
     updatedAt: '2026-03-28T14:30:00.000Z',
-    price: 499,
+    price: 99,
     currency: '₹',
   },
   {
@@ -228,7 +228,7 @@ export const SAMPLE_BOOKS: Book[] = [
     ],
     createdAt: '2026-02-10T08:15:00.000Z',
     updatedAt: '2026-03-20T11:45:00.000Z',
-    price: 349,
+    price: 79,
     currency: '₹',
   },
   {
@@ -343,7 +343,7 @@ export const SAMPLE_BOOKS: Book[] = [
     ],
     createdAt: '2026-01-20T14:00:00.000Z',
     updatedAt: '2026-03-25T16:20:00.000Z',
-    price: 699,
+    price: 129,
     currency: '₹',
   }
 ];

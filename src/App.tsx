@@ -11,6 +11,7 @@ import { BookEditorModal } from './components/BookEditorModal';
 import { NewBookModal } from './components/NewBookModal';
 import { RazorpayCheckoutModal } from './components/RazorpayCheckoutModal';
 import { RazorpaySettingsModal } from './components/RazorpaySettingsModal';
+import { LegalPoliciesModal, PolicyTab } from './components/LegalPoliciesModal';
 import { AdSenseBlock } from './components/AdSenseBlock';
 import { AuthScreen } from './components/AuthScreen';
 import { useAuth, GUEST_USER } from './context/AuthContext';
@@ -80,6 +81,7 @@ export default function App() {
   const [showNewModal, setShowNewModal] = useState<boolean>(false);
   const [checkoutBook, setCheckoutBook] = useState<Book | null>(null);
   const [showPaymentSettingsModal, setShowPaymentSettingsModal] = useState<boolean>(false);
+  const [legalTab, setLegalTab] = useState<PolicyTab | null>(null);
   const [purchasedIds, setPurchasedIds] = useState<string[]>(() => getPurchasedBookIds());
 
   // Search & Category Filters
@@ -553,31 +555,69 @@ export default function App() {
       </main>
 
       {/* QUIET CURATORIAL FOOTER */}
-      <footer className="mt-auto px-6 lg:px-12 py-6 border-t border-stone-200/80 bg-[#f4f0e8]/40 text-stone-500 text-xs flex flex-col sm:flex-row items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <span className="font-serif font-bold text-stone-700">FolioCraft</span>
-          <span>·</span>
-          {user ? (
-            <span>Logged in as {user.email || user.displayName}</span>
-          ) : (
+      <footer className="mt-auto px-6 lg:px-12 py-6 border-t border-stone-200/80 bg-[#f4f0e8]/40 text-stone-500 text-xs flex flex-col gap-3">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="font-serif font-bold text-stone-700">FolioCraft</span>
+            <span>·</span>
+            {user ? (
+              <span>Logged in as {user.email || user.displayName}</span>
+            ) : (
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className="text-stone-600 hover:text-stone-900 underline transition-colors"
+              >
+                Sign in with Google
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-4 text-[11px]">
             <button
-              onClick={() => setShowAuthModal(true)}
-              className="text-stone-600 hover:text-stone-900 underline transition-colors"
+              onClick={handleResetToSamples}
+              className="hover:text-stone-900 transition-colors flex items-center gap-1"
             >
-              Sign in with Google
+              <RotateCcw className="w-3 h-3" />
+              <span>Reset Demo Library</span>
             </button>
-          )}
+            <span>·</span>
+            <span>Firebase Cloud Persistence &amp; jsPDF</span>
+          </div>
         </div>
-        <div className="flex items-center gap-4 text-[11px]">
-          <button
-            onClick={handleResetToSamples}
-            className="hover:text-stone-900 transition-colors flex items-center gap-1"
-          >
-            <RotateCcw className="w-3 h-3" />
-            <span>Reset Demo Library</span>
-          </button>
-          <span>·</span>
-          <span>Firebase Cloud Persistence &amp; jsPDF</span>
+
+        {/* Razorpay Merchant Compliance & Policy Links */}
+        <div className="pt-3 border-t border-stone-200/60 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => setLegalTab('terms')}
+              className="hover:text-stone-900 transition-colors underline-offset-2 hover:underline"
+            >
+              Terms &amp; Conditions
+            </button>
+            <span>·</span>
+            <button
+              onClick={() => setLegalTab('privacy')}
+              className="hover:text-stone-900 transition-colors underline-offset-2 hover:underline"
+            >
+              Privacy Policy
+            </button>
+            <span>·</span>
+            <button
+              onClick={() => setLegalTab('refund')}
+              className="hover:text-stone-900 transition-colors underline-offset-2 hover:underline"
+            >
+              Refund &amp; Cancellation
+            </button>
+            <span>·</span>
+            <button
+              onClick={() => setLegalTab('contact')}
+              className="hover:text-stone-900 transition-colors underline-offset-2 hover:underline"
+            >
+              Contact &amp; Support
+            </button>
+          </div>
+          <div className="text-stone-400">
+            Payments secured by Razorpay
+          </div>
         </div>
       </footer>
 
@@ -669,6 +709,14 @@ export default function App() {
       {/* 8. Google Authentication & Account Modal */}
       {showAuthModal && (
         <AuthScreen onClose={() => setShowAuthModal(false)} />
+      )}
+
+      {/* 9. Legal & Compliance Policies Modal */}
+      {legalTab && (
+        <LegalPoliciesModal
+          initialTab={legalTab}
+          onClose={() => setLegalTab(null)}
+        />
       )}
     </div>
   );

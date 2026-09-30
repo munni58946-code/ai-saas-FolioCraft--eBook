@@ -346,7 +346,7 @@ export const BookMockup3D: React.FC<BookMockup3DProps> = ({
                 <span>{book.publicationYear}</span>
                 <span>·</span>
                 <span className="font-semibold text-amber-300">
-                  {book.price === 0 ? 'FREE' : `${book.currency || '₹'}${book.price ?? 499}`}
+                  {book.currency || '₹'}{book.price ?? 99}
                 </span>
               </div>
             </div>
@@ -414,7 +414,7 @@ export const BookMockup3D: React.FC<BookMockup3DProps> = ({
                   ISBN 978-0-241-92{book.publicationYear}
                 </div>
                 <div className="text-[9px] font-mono font-bold text-amber-300">
-                  PRICE: {book.price === 0 ? 'FREE' : `${book.currency || '₹'}${book.price ?? 499}`}
+                  PRICE: {book.currency || '₹'}{book.price ?? 99}
                 </div>
               </div>
               <div className="w-12 h-6 bg-white/90 rounded px-1 flex items-center justify-center">

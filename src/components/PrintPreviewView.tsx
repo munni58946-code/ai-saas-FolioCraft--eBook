@@ -182,7 +182,7 @@ export const PrintPreviewView: React.FC<PrintPreviewViewProps> = ({ book, onExit
               {book.edition} · All Rights Reserved
             </div>
             <div className="mt-2 inline-block px-3 py-1 rounded text-[11px] font-sans font-bold tracking-wider uppercase border border-white/25 bg-black/40 text-amber-300">
-              {book.price === 0 ? 'Open Access Monograph (Free)' : `Monograph Retail: ${book.currency || '₹'}${book.price ?? 499}`}
+              Monograph Retail: {book.currency || '₹'}{book.price ?? 99}
             </div>
           </div>
         </div>

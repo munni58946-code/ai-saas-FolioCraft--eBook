@@ -25,9 +25,8 @@ export const BookEditorModal: React.FC<BookEditorModalProps> = ({
   const [publicationYear, setPublicationYear] = useState(book.publicationYear);
   const [genre, setGenre] = useState(book.genre);
   const [themeId, setThemeId] = useState<ThemePaletteId>(book.themeId);
-  const [price, setPrice] = useState<number>(book.price ?? 499);
+  const [price, setPrice] = useState<number>(book.price ?? 99);
   const [currency, setCurrency] = useState<string>(book.currency || '₹');
-  const [isFree, setIsFree] = useState<boolean>(book.price === 0);
 
   // Demographic
   const [demographic, setDemographic] = useState({ ...book.demographic });
@@ -47,7 +46,7 @@ export const BookEditorModal: React.FC<BookEditorModalProps> = ({
       themeId,
       demographic,
       chapters,
-      price: isFree ? 0 : Number(price) || 0,
+      price: Number(price) > 0 ? Number(price) : 99,
       currency,
       updatedAt: new Date().toISOString(),
     };
@@ -207,54 +206,40 @@ export const BookEditorModal: React.FC<BookEditorModalProps> = ({
                   <label className="text-xs font-semibold text-stone-900">
                     Monograph Retail Price &amp; Currency
                   </label>
-                  <label className="flex items-center gap-1.5 cursor-pointer text-xs text-stone-600 hover:text-stone-900 select-none">
-                    <input
-                      type="checkbox"
-                      checked={isFree}
-                      onChange={(e) => setIsFree(e.target.checked)}
-                      className="rounded border-stone-300 text-stone-900 focus:ring-stone-900 h-3.5 w-3.5"
-                    />
-                    <span className="font-medium">Free / Open Access (₹0 / $0)</span>
-                  </label>
+                  <span className="text-[11px] text-stone-500 font-medium">Standard ₹99</span>
                 </div>
 
-                {!isFree ? (
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <span className="block text-[11px] text-stone-500 mb-1">Currency Symbol</span>
-                      <select
-                        value={currency}
-                        onChange={(e) => setCurrency(e.target.value)}
-                        className="w-full text-xs px-3 py-2 border border-stone-300 rounded-lg focus:ring-1 focus:ring-stone-900 bg-white"
-                      >
-                        <option value="₹">₹ INR (Indian Rupee)</option>
-                        <option value="$">$ USD (US Dollar)</option>
-                        <option value="€">€ EUR (Euro)</option>
-                        <option value="£">£ GBP (British Pound)</option>
-                      </select>
-                    </div>
-                    <div>
-                      <span className="block text-[11px] text-stone-500 mb-1">Retail Price</span>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-stone-500">
-                          {currency}
-                        </span>
-                        <input
-                          type="number"
-                          min="0"
-                          step={currency === '₹' ? '1' : '0.01'}
-                          value={price}
-                          onChange={(e) => setPrice(Number(e.target.value))}
-                          className="w-full text-xs pl-7 pr-3 py-2 border border-stone-300 rounded-lg focus:ring-1 focus:ring-stone-900 bg-white"
-                        />
-                      </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <span className="block text-[11px] text-stone-500 mb-1">Currency Symbol</span>
+                    <select
+                      value={currency}
+                      onChange={(e) => setCurrency(e.target.value)}
+                      className="w-full text-xs px-3 py-2 border border-stone-300 rounded-lg focus:ring-1 focus:ring-stone-900 bg-white"
+                    >
+                      <option value="₹">₹ INR (Indian Rupee)</option>
+                      <option value="$">$ USD (US Dollar)</option>
+                      <option value="€">€ EUR (Euro)</option>
+                      <option value="£">£ GBP (British Pound)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <span className="block text-[11px] text-stone-500 mb-1">Retail Price</span>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-stone-500">
+                        {currency}
+                      </span>
+                      <input
+                        type="number"
+                        min="1"
+                        step={currency === '₹' ? '1' : '0.01'}
+                        value={price}
+                        onChange={(e) => setPrice(Number(e.target.value))}
+                        className="w-full text-xs pl-7 pr-3 py-2 border border-stone-300 rounded-lg focus:ring-1 focus:ring-stone-900 bg-white"
+                      />
                     </div>
                   </div>
-                ) : (
-                  <div className="py-1 text-xs text-emerald-700 font-medium">
-                    Marked as Open Access Monograph (Free to Read and Download)
-                  </div>
-                )}
+                </div>
               </div>
 
               {/* Theme Palette Selection */}

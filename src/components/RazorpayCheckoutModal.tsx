@@ -60,7 +60,7 @@ export const RazorpayCheckoutModal: React.FC<RazorpayCheckoutModalProps> = ({
   const [completedOrder, setCompletedOrder] = useState<PaymentOrder | null>(null);
   const [copiedId, setCopiedId] = useState(false);
 
-  const priceAmount = book.price !== undefined ? book.price : 499;
+  const priceAmount = book.price !== undefined ? book.price : 99;
   const currencySymbol = book.currency || '₹';
 
   const handleSaveKey = () => {
@@ -109,8 +109,7 @@ export const RazorpayCheckoutModal: React.FC<RazorpayCheckoutModalProps> = ({
 
     // Check if Razorpay script is loaded in browser
     if (typeof (window as any).Razorpay === 'undefined') {
-      // Fallback: If network blocked script or offline, allow test simulation
-      handleSimulatePayment();
+      setErrorMessage('Razorpay payment gateway is loading. Please check your internet connection or refresh the page.');
       return;
     }
 
@@ -152,20 +151,9 @@ export const RazorpayCheckoutModal: React.FC<RazorpayCheckoutModalProps> = ({
       rzp.open();
     } catch (err: any) {
       setIsProcessing(false);
-      console.warn('Razorpay popup error, falling back:', err);
-      setErrorMessage(err.message || 'Could not initiate Razorpay. Check your API Key.');
+      console.warn('Razorpay popup error:', err);
+      setErrorMessage(err.message || 'Could not initiate Razorpay. Check your connection.');
     }
-  };
-
-  const handleSimulatePayment = () => {
-    setIsProcessing(true);
-    setErrorMessage(null);
-
-    setTimeout(() => {
-      setIsProcessing(false);
-      const fakePaymentId = `pay_sim_${Math.random().toString(36).substring(2, 11).toUpperCase()}`;
-      handleCompleteSuccess(fakePaymentId);
-    }, 1200);
   };
 
   const copyPaymentId = () => {
@@ -493,23 +481,13 @@ export const RazorpayCheckoutModal: React.FC<RazorpayCheckoutModalProps> = ({
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={handleSimulatePayment}
-                disabled={isProcessing}
-                className="px-3 py-2 text-xs font-medium bg-white hover:bg-stone-100 text-stone-700 border border-stone-300 rounded-xl transition-colors disabled:opacity-50"
-                title="Instant simulation without charging a bank card"
-              >
-                Instant Test Pay
-              </button>
-
-              <button
-                type="button"
                 onClick={handleRazorpayPay}
                 disabled={isProcessing}
-                className="flex items-center gap-2 px-5 py-2.5 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-xs transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 px-6 py-2.5 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
               >
                 <CreditCard className="w-4 h-4 text-blue-200" />
                 <span>
-                  {isProcessing ? 'Connecting...' : `Pay ${currencySymbol}${priceAmount} with Razorpay`}
+                  {isProcessing ? 'Opening Razorpay...' : `Pay ${currencySymbol}${priceAmount} with Razorpay`}
                 </span>
               </button>
             </div>

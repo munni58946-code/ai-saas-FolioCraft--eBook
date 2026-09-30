@@ -163,21 +163,21 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
               color: currentPaper.text,
             }}
           >
-            {book.price === 0 ? 'Open Access' : `${book.currency || '₹'}${book.price ?? 499}`}
+            {book.currency || '₹'}{book.price ?? 99}
           </span>
         </div>
 
         {/* Center / Right: Tools */}
         <div className="flex items-center gap-2">
           {/* Razorpay Buy Monograph Button if not purchased */}
-          {book.price !== 0 && !isPurchased && onOpenCheckout && (
+          {!isPurchased && onOpenCheckout && (
             <button
               onClick={onOpenCheckout}
               className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition-colors"
               title="Unlock full monograph with Razorpay"
             >
               <CreditCard className="w-3.5 h-3.5 text-blue-200" />
-              <span>Buy ({book.currency || '₹'}{book.price ?? 499})</span>
+              <span>Buy ({book.currency || '₹'}{book.price ?? 99})</span>
             </button>
           )}
 

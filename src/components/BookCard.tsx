@@ -62,7 +62,7 @@ export const BookCard: React.FC<BookCardProps> = ({
 
           {/* Price Seal on Cover */}
           <div className="absolute top-2 left-2 z-10 bg-black/75 backdrop-blur-xs text-white text-[9.5px] font-sans font-semibold px-1.5 py-0.5 rounded border border-white/20 shadow-xs">
-            {book.price === 0 ? 'FREE' : `${book.currency || '₹'}${book.price ?? 499}`}
+            {book.currency || '₹'}{book.price ?? 99}
           </div>
 
           {/* Mini Header */}
@@ -112,7 +112,7 @@ export const BookCard: React.FC<BookCardProps> = ({
               <span>{book.edition}</span>
               <span aria-hidden="true">·</span>
               <span className="font-semibold text-stone-900 bg-amber-50 text-amber-900 px-2 py-0.5 rounded border border-amber-200/80 text-[11px] shadow-2xs">
-                {book.price === 0 ? 'Open Access (Free)' : `Retail: ${book.currency || '₹'}${book.price ?? 499}`}
+                Retail: {book.currency || '₹'}{book.price ?? 99}
               </span>
             </div>
 
@@ -166,23 +166,21 @@ export const BookCard: React.FC<BookCardProps> = ({
       <div className="px-5 py-3 bg-stone-50/80 border-t border-stone-100 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 flex-wrap">
           {/* Razorpay Direct Buy / Unlocked status */}
-          {book.price !== 0 && (
-            isPurchased ? (
-              <span className="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-emerald-800 bg-emerald-100/90 rounded-md border border-emerald-200">
-                <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Unlocked (Paid)</span>
-              </span>
-            ) : onBuyRequest ? (
-              <button
-                onClick={() => onBuyRequest(book)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-xs transition-colors"
-                title="Pay with Razorpay (UPI, GPay, Cards)"
-              >
-                <CreditCard className="w-3.5 h-3.5 text-blue-200" />
-                <span>Buy ({book.currency || '₹'}{book.price ?? 499})</span>
-              </button>
-            ) : null
-          )}
+          {isPurchased ? (
+            <span className="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-emerald-800 bg-emerald-100/90 rounded-md border border-emerald-200">
+              <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Unlocked</span>
+            </span>
+          ) : onBuyRequest ? (
+            <button
+              onClick={() => onBuyRequest(book)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-xs transition-colors"
+              title="Pay with Razorpay (UPI, GPay, Cards)"
+            >
+              <CreditCard className="w-3.5 h-3.5 text-blue-200" />
+              <span>Buy ({book.currency || '₹'}{book.price ?? 99})</span>
+            </button>
+          ) : null}
 
           {/* 1. Open in Reader */}
           <button

@@ -17,9 +17,8 @@ const RAZORPAY_KEY_STORAGE = 'foliocraft_razorpay_key_id';
 const PURCHASED_BOOKS_STORAGE = 'foliocraft_purchased_books';
 const PAYMENT_ORDERS_STORAGE = 'foliocraft_payment_orders';
 
-// Default public sandbox test key ID for instant preview / testing
-// Users can configure their own Razorpay Key ID (Live or Test) in the settings modal
-export const DEFAULT_RAZORPAY_KEY = 'rzp_test_1DP5mmOlF5G5ag';
+// Production Live Key ID provided by user for direct bank settlements
+export const DEFAULT_RAZORPAY_KEY = 'rzp_live_TiF0DLx1XjzieL';
 
 export function getRazorpayKey(): string {
   try {
@@ -46,8 +45,7 @@ export function getPurchasedBookIds(): string[] {
   }
 }
 
-export function isBookPurchased(bookId: string, bookPrice?: number): boolean {
-  if (bookPrice === 0) return true; // Open access is always free
+export function isBookPurchased(bookId: string, _bookPrice?: number): boolean {
   const ids = getPurchasedBookIds();
   return ids.includes(bookId);
 }
