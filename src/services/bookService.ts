@@ -6,7 +6,7 @@ import {
   deleteDoc,
   onSnapshot,
 } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from '../firebase';
+import { db, auth, handleFirestoreError, OperationType } from '../firebase';
 import { Book } from '../types/book';
 import { SAMPLE_BOOKS } from '../data/sampleBooks';
 
@@ -35,6 +35,13 @@ export function subscribeUserBooks(
   onUpdate: (books: Book[]) => void,
   onError?: (error: Error) => void
 ): () => void {
+  // If guest or unauthenticated, work exclusively in local offline mode
+  if (!userId || userId === 'guest_reader' || !auth.currentUser) {
+    const local = getLocalBooks(userId || 'guest_reader');
+    onUpdate(local);
+    return () => {};
+  }
+
   const booksPath = `users/${userId}/books`;
   const booksCol = collection(db, 'users', userId, 'books');
 
@@ -55,7 +62,7 @@ export function subscribeUserBooks(
           saveLocalBooks(userId, seededBooks);
           onUpdate(seededBooks);
         } catch (err) {
-          console.warn('Could not auto-seed sample books:', err);
+          console.warn('Could not auto-seed sample books to Firestore, using local cache:', err);
           const fallback = getLocalBooks(userId);
           onUpdate(fallback);
         }
@@ -90,15 +97,10 @@ export function subscribeUserBooks(
       }
     },
     (error) => {
-      console.warn('Firestore onSnapshot error, using local books:', error);
+      console.warn('Firestore onSnapshot sync notice, falling back to local monographs:', error.message);
       const fallback = getLocalBooks(userId);
       onUpdate(fallback);
       if (onError) onError(error);
-      try {
-        handleFirestoreError(error, OperationType.GET, booksPath);
-      } catch (err) {
-        // Diagnostic handled and logged
-      }
     }
   );
 
@@ -107,7 +109,7 @@ export function subscribeUserBooks(
 
 export async function saveUserBook(userId: string, book: Book): Promise<void> {
   const path = `users/${userId}/books/${book.id}`;
-  // Always update local cache
+  // Always update local cache immediately for instantaneous UI updates
   const local = getLocalBooks(userId);
   const idx = local.findIndex((b) => b.id === book.id);
   const updatedBook = {
@@ -122,32 +124,34 @@ export async function saveUserBook(userId: string, book: Book): Promise<void> {
   }
   saveLocalBooks(userId, local);
 
+  // If guest or unauthenticated, stay in local cache
+  if (!userId || userId === 'guest_reader' || !auth.currentUser) {
+    return;
+  }
+
   try {
     const bookDocRef = doc(db, 'users', userId, 'books', book.id);
     await setDoc(bookDocRef, updatedBook, { merge: true });
   } catch (error) {
-    try {
-      handleFirestoreError(error, OperationType.WRITE, path);
-    } catch (err) {
-      // Diagnostic handled and logged
-    }
+    console.warn('Could not sync book to Firestore, saved to local cache:', error);
   }
 }
 
 export async function deleteUserBook(userId: string, bookId: string): Promise<void> {
   const path = `users/${userId}/books/${bookId}`;
-  // Always update local cache
+  // Always update local cache immediately
   const local = getLocalBooks(userId).filter((b) => b.id !== bookId);
   saveLocalBooks(userId, local);
+
+  // If guest or unauthenticated, stay in local cache
+  if (!userId || userId === 'guest_reader' || !auth.currentUser) {
+    return;
+  }
 
   try {
     const bookDocRef = doc(db, 'users', userId, 'books', bookId);
     await deleteDoc(bookDocRef);
   } catch (error) {
-    try {
-      handleFirestoreError(error, OperationType.DELETE, path);
-    } catch (err) {
-      // Diagnostic handled and logged
-    }
+    console.warn('Could not delete book from Firestore, removed from local cache:', error);
   }
 }

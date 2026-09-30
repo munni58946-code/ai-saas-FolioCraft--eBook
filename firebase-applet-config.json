@@ -1,12 +1,12 @@
 {
-  "projectId": "pioneering-shoreline-44r4b",
-  "appId": "1:21173776528:web:78ac110d916af10e906815",
-  "apiKey": "AIzaSyB-F-dcY3kxFKXio4unN5mPHSysG_pz7XA",
-  "authDomain": "pioneering-shoreline-44r4b.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-foliocraftebooks-0745b519-21fe-4abc-b97c-47a9015ee733",
-  "storageBucket": "pioneering-shoreline-44r4b.firebasestorage.app",
-  "messagingSenderId": "21173776528",
-  "measurementId": "",
-  "oAuthClientId": "21173776528-jjs24lnj64d7sbn35hcnidh6bdlmtnh9.apps.googleusercontent.com",
+  "projectId": "pioneering-shoreline-44r-abcff",
+  "appId": "1:823862753968:web:9795f458b6b3748daf9975",
+  "apiKey": "AIzaSyAq8uAJmw9EyojQPcXUbd8EkJ1S970WDcs",
+  "authDomain": "pioneering-shoreline-44r-abcff.firebaseapp.com",
+  "firestoreDatabaseId": "(default)",
+  "storageBucket": "pioneering-shoreline-44r-abcff.firebasestorage.app",
+  "messagingSenderId": "823862753968",
+  "measurementId": "G-H2DXYNERKK",
+  "oAuthClientId": "",
   "recaptchaSiteKey": ""
 }

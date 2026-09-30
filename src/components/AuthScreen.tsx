@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import firebaseConfig from '../../firebase-applet-config.json';
 import {
   BookOpen,
   Sparkles,
@@ -12,10 +13,15 @@ import {
   Copy,
   Check,
   UserCheck,
+  X,
 } from 'lucide-react';
 import { AdSenseBlock } from './AdSenseBlock';
 
-export const AuthScreen: React.FC = () => {
+interface AuthScreenProps {
+  onClose?: () => void;
+}
+
+export const AuthScreen: React.FC<AuthScreenProps> = ({ onClose }) => {
   const {
     signInWithGoogle,
     signInWithEmail,
@@ -34,7 +40,7 @@ export const AuthScreen: React.FC = () => {
   const [copiedDomain, setCopiedDomain] = useState(false);
 
   const currentDomain = typeof window !== 'undefined' ? window.location.hostname : '';
-  const firebaseSettingsUrl = 'https://console.firebase.google.com/project/pioneering-shoreline-44r4b/authentication/settings';
+  const firebaseSettingsUrl = `https://console.firebase.google.com/project/${firebaseConfig.projectId}/authentication/settings`;
 
   const copyDomain = () => {
     if (!currentDomain) return;
@@ -71,6 +77,7 @@ export const AuthScreen: React.FC = () => {
       } else {
         await signUpWithEmail(email, password);
       }
+      onClose?.();
     } catch (err: any) {
       // Handled in context
     } finally {
@@ -84,11 +91,17 @@ export const AuthScreen: React.FC = () => {
     setIsSubmitting(true);
     try {
       await signInWithGoogle();
+      onClose?.();
     } catch (err: any) {
       // Handled in context
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleGuestSignIn = async () => {
+    await signInAsGuest();
+    onClose?.();
   };
 
   const displayError = localError || authError;
@@ -98,28 +111,40 @@ export const AuthScreen: React.FC = () => {
     (typeof displayError === 'string' && displayError.toLowerCase().includes('unauthorized-domain'));
 
   return (
-    <div className="min-h-screen bg-[#faf8f5] text-stone-900 flex flex-col justify-between selection:bg-stone-800 selection:text-stone-100">
-      {/* Top Header Bar */}
-      <header className="px-6 lg:px-12 py-5 border-b border-stone-200/80 bg-[#faf8f5]/90 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-xl font-bold tracking-tight text-stone-900 font-serif">
-            FolioCraft
-          </span>
-          <span className="text-stone-400 text-xs">·</span>
-          <span className="text-xs text-stone-500 font-sans uppercase tracking-wider">
-            Publishing Studio
-          </span>
-        </div>
+    <div className={`min-h-screen bg-[#faf8f5] text-stone-900 flex flex-col justify-between selection:bg-stone-800 selection:text-stone-100 ${onClose ? 'fixed inset-0 z-50 overflow-y-auto bg-stone-900/60 backdrop-blur-xs flex items-center justify-center p-4' : ''}`}>
+      {/* Top Header Bar if standalone */}
+      {!onClose && (
+        <header className="px-6 lg:px-12 py-5 border-b border-stone-200/80 bg-[#faf8f5]/90 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-xl font-bold tracking-tight text-stone-900 font-serif">
+              FolioCraft
+            </span>
+            <span className="text-stone-400 text-xs">·</span>
+            <span className="text-xs text-stone-500 font-sans uppercase tracking-wider">
+              Publishing Studio
+            </span>
+          </div>
 
-        <div className="flex items-center gap-1.5 text-xs text-stone-500">
-          <ShieldCheck className="w-3.5 h-3.5 text-stone-400" />
-          <span>Secure Firebase Authentication</span>
-        </div>
-      </header>
+          <div className="flex items-center gap-1.5 text-xs text-stone-500">
+            <ShieldCheck className="w-3.5 h-3.5 text-stone-400" />
+            <span>Secure Firebase Authentication</span>
+          </div>
+        </header>
+      )}
 
       {/* Main Auth Container */}
-      <main className="flex-1 flex flex-col items-center justify-center p-6 sm:p-10">
-        <div className="w-full max-w-md bg-white rounded-2xl border border-stone-200 shadow-xl overflow-hidden">
+      <main className={`flex-1 flex flex-col items-center justify-center p-4 sm:p-6 w-full ${onClose ? 'max-w-md my-auto' : ''}`}>
+        <div className="w-full max-w-md bg-white rounded-2xl border border-stone-200 shadow-2xl overflow-hidden relative">
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="absolute top-4 right-4 p-2 rounded-full text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors z-10"
+              title="Close"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+
           {/* Card Banner */}
           <div className="p-8 text-center border-b border-stone-100 bg-gradient-to-b from-stone-50 to-white">
             <div className="w-12 h-12 rounded-xl bg-stone-900 text-white flex items-center justify-center mx-auto mb-4 shadow-sm">
@@ -130,7 +155,7 @@ export const AuthScreen: React.FC = () => {
               {mode === 'signin' ? 'Sign in to FolioCraft' : 'Create Publisher Account'}
             </h1>
             <p className="font-serif italic text-xs text-stone-600 mt-2 leading-relaxed">
-              Authentication is required to access your private library, reader studio, 3D mockups, and vector PDF publisher.
+              Sign in with your Google account to sync your books to the cloud or continue directly as a publisher.
             </p>
           </div>
 
@@ -184,7 +209,7 @@ export const AuthScreen: React.FC = () => {
 
                   <button
                     type="button"
-                    onClick={() => signInAsGuest()}
+                    onClick={handleGuestSignIn}
                     className="flex-1 px-3 py-2 bg-stone-900 hover:bg-stone-800 text-white font-semibold text-[11px] rounded-lg transition-colors flex items-center justify-center gap-1.5"
                   >
                     <Sparkles className="w-3 h-3 text-amber-400" />
@@ -199,31 +224,7 @@ export const AuthScreen: React.FC = () => {
               </div>
             ) : null}
 
-            {/* 1. Instant One-Click Login Button for Munni */}
-            <div>
-              <button
-                type="button"
-                onClick={() => signInAsGuest()}
-                disabled={isSubmitting}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-stone-900 hover:bg-stone-800 text-white text-xs font-semibold rounded-lg shadow-sm transition-colors"
-              >
-                <Sparkles className="w-4 h-4 text-amber-400" />
-                <span>Instant 1-Click Access (munni58946@gmail.com)</span>
-              </button>
-              <p className="text-[10px] text-center text-stone-500 mt-1">
-                Bypasses domain restrictions &amp; opens your full monograph studio immediately
-              </p>
-            </div>
-
-            {/* Separator */}
-            <div className="relative flex items-center justify-center my-1">
-              <div className="border-t border-stone-200 w-full" />
-              <span className="bg-white px-3 text-[11px] text-stone-400 font-sans uppercase tracking-wider relative">
-                or use Google Account
-              </span>
-            </div>
-
-            {/* 2. Secondary: Continue with Google Popup */}
+            {/* 1. Primary: Continue with Google Popup */}
             <div>
               <button
                 type="button"
@@ -252,6 +253,14 @@ export const AuthScreen: React.FC = () => {
                 </svg>
                 <span>Continue with Google</span>
               </button>
+            </div>
+
+            {/* Separator */}
+            <div className="relative flex items-center justify-center my-1">
+              <div className="border-t border-stone-200 w-full" />
+              <span className="bg-white px-3 text-[11px] text-stone-400 font-sans uppercase tracking-wider relative">
+                or sign in with email
+              </span>
             </div>
 
             {/* Separator */}

@@ -26,17 +26,17 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const DEFAULT_PUBLISHER_USER = {
-  uid: 'publisher_munni58946',
-  email: 'munni58946@gmail.com',
-  displayName: 'Munni (Publisher)',
+export const GUEST_USER = {
+  uid: 'guest_reader',
+  email: '',
+  displayName: 'Guest Reader',
   photoURL: '',
-  isAnonymous: false,
+  isAnonymous: true,
 } as unknown as User;
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(DEFAULT_PUBLISHER_USER);
-  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -54,7 +54,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (!userDoc.exists()) {
             await setDoc(userRef, {
               userId: currentUser.uid,
-              email: currentUser.email || 'munni58946@gmail.com',
+              email: currentUser.email || '',
               displayName: currentUser.displayName || 'Publisher',
               photoURL: currentUser.photoURL || '',
               createdAt: new Date().toISOString(),
@@ -64,14 +64,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.warn('Could not sync user profile to firestore:', err);
         }
       } else {
-        // If no active Firebase session, keep publisher user or allow login
-        // Check if user explicitly signed out in session
-        const signedOut = sessionStorage.getItem('foliocraft_signed_out');
-        if (signedOut === 'true') {
-          setUser(null);
-        } else {
-          setUser(DEFAULT_PUBLISHER_USER);
-        }
+        setUser(null);
       }
       setLoading(false);
     });
@@ -83,7 +76,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signInWithGoogle = async () => {
     setAuthError(null);
-    sessionStorage.removeItem('foliocraft_signed_out');
     try {
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
@@ -101,20 +93,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setAuthError('Google sign-in is not enabled in Firebase Console.');
         throw err;
       } else {
-        // If popup blocked or other transient error, fallback to publisher
-        setUser(DEFAULT_PUBLISHER_USER);
+        throw err;
       }
     }
   };
 
   const signInAsGuest = async () => {
     setAuthError(null);
-    sessionStorage.removeItem('foliocraft_signed_out');
     try {
       const result = await signInAnonymously(auth);
       setUser(result.user);
     } catch (err) {
-      setUser(DEFAULT_PUBLISHER_USER);
+      setUser(GUEST_USER);
     }
   };
 

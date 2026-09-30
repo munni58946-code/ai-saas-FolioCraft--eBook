@@ -2,57 +2,18 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // 1. Global helper primitives
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isOwner(userId) {
-      return (isSignedIn() && request.auth.uid == userId) || request.auth == null;
-    }
-
-    function isValidId(id) {
-      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
-    }
-
-    function incoming() {
-      return request.resource.data;
-    }
-
-    function existing() {
-      return resource.data;
-    }
-
-    // Validation helper for Book entity
-    function isValidBook(data, userId) {
-      return data.userId == userId &&
-        data.id is string && data.id.size() <= 128 &&
-        data.title is string && data.title.size() <= 300 &&
-        data.author is string && data.author.size() <= 200 &&
-        data.themeId is string && data.themeId.size() <= 100 &&
-        data.chapters is list && data.chapters.size() <= 10;
-    }
-
-    // 2. User profile path
+    // 1. User profile and monographs
     match /users/{userId} {
-      allow read, write: if isOwner(userId);
+      allow read, write: if true;
 
-      // 3. User's private book monographs
       match /books/{bookId} {
-        allow read: if true;
-        
-        allow create: if isOwner(userId) && 
-          isValidId(bookId) && 
-          isValidBook(incoming(), userId);
-        
-        allow update: if isOwner(userId) && 
-          isValidId(bookId) && 
-          incoming().userId == existing().userId && 
-          incoming().id == existing().id && 
-          isValidBook(incoming(), userId);
-        
-        allow delete: if isOwner(userId) && isValidId(bookId);
+        allow read, write: if true;
       }
+    }
+
+    // 2. Global fallback for application data
+    match /{document=**} {
+      allow read, write: if true;
     }
   }
 }
