@@ -12,6 +12,7 @@ import { NewBookModal } from './components/NewBookModal';
 import { RazorpayCheckoutModal } from './components/RazorpayCheckoutModal';
 import { RazorpaySettingsModal } from './components/RazorpaySettingsModal';
 import { AdSenseBlock } from './components/AdSenseBlock';
+import { AuthScreen } from './components/AuthScreen';
 import { useAuth, DEFAULT_PUBLISHER_USER } from './context/AuthContext';
 import {
   subscribeUserBooks,
@@ -39,8 +40,21 @@ import {
 } from 'lucide-react';
 
 export default function App() {
-  const { user, signOut } = useAuth();
-  const currentUser = user || DEFAULT_PUBLISHER_USER;
+  const { user, loading, signOut } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#faf8f5] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-stone-600 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthScreen />;
+  }
+
+  const currentUser = user;
 
   // Books list state managed via Firestore for the authenticated user
   const [books, setBooks] = useState<Book[]>([]);
